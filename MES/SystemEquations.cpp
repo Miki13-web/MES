@@ -2,7 +2,7 @@
 SystemEquations::SystemEquations(int size) : nN(size) {
     HG = new double* [nN];
     Pg = new double[nN]();
-	t = new double[nN]();7;
+	t = new double[nN]();
 
 	Cg = new double* [nN];
 

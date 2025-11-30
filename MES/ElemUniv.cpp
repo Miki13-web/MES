@@ -81,6 +81,37 @@ elemUniv::elemUniv(int npc) : npc(npc) {
 
         break;
     }
+    case 4: { // Schemat 4x4
+		double p1 = sqrt((3.0 + 2.0 * sqrt(6.0 / 5.0)) / 7.0);
+		double p2 = sqrt((3.0 - 2.0 * sqrt(6.0 / 5.0)) / 7.0);
+		double w1 = (18.0 - sqrt(30.0)) / 36.0;
+		double w2 = (18.0 + sqrt(30.0)) / 36.0;
+
+		ksi_pc[0] = -p1; eta_pc[0] = -p1; wagi[0] = w1 * w1;
+		ksi_pc[1] = -p2; eta_pc[1] = -p1; wagi[1] = w2 * w1;
+		ksi_pc[2] = p2;  eta_pc[2] = -p1; wagi[2] = w2 * w1;
+		ksi_pc[3] = p1;  eta_pc[3] = -p1; wagi[3] = w1 * w1;
+		ksi_pc[4] = -p1; eta_pc[4] = -p2; wagi[4] = w1 * w2;
+		ksi_pc[5] = -p2; eta_pc[5] = -p2; wagi[5] = w2 * w2;
+		ksi_pc[6] = p2;  eta_pc[6] = -p2; wagi[6] = w2 * w2;
+		ksi_pc[7] = p1;  eta_pc[7] = -p2; wagi[7] = w1 * w2;
+		ksi_pc[8] = -p1; eta_pc[8] = p2;  wagi[8] = w1 * w2;
+		ksi_pc[9] = -p2; eta_pc[9] = p2;  wagi[9] = w2 * w2;
+		ksi_pc[10] = p2; eta_pc[10] = p2; wagi[10] = w2 * w2;
+		ksi_pc[11] = p1; eta_pc[11] = p2; wagi[11] = w1 * w2;
+		ksi_pc[12] = -p1; eta_pc[12] = p1; wagi[12] = w1 * w1;
+		ksi_pc[13] = -p2; eta_pc[13] = p1; wagi[13] = w2 * w1;
+		ksi_pc[14] = p2;  eta_pc[14] = p1; wagi[14] = w2 * w1;
+		ksi_pc[15] = p1;  eta_pc[15] = p1; wagi[15] = w1 * w1;
+
+        //punkty na krawedziach dla macierzy Hbc
+		points_1d[0] = -p1; weights_1d[0] = w1;
+		points_1d[1] = -p2; weights_1d[1] = w2;
+		points_1d[2] = p2;  weights_1d[2] = w2;
+		points_1d[3] = p1;  weights_1d[3] = w1;
+
+        break;
+    }
     default:
         std::cerr << "Nieobsługiwana liczba punktów całkowania: " << npc << std::endl;
         // Domyślnie 4, aby uniknąć awarii

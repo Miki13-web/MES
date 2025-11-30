@@ -233,9 +233,17 @@ void runCalculations(grid& gri, GlobalData& gData, elemUniv& elemU, SystemEquati
 
 void solveEquation(SystemEquations& sysEq) {
     int n = sysEq.nN;
-    double** A = sysEq.HG; // Skrót do macierzy H globalnej
+    //double** A = sysEq.HG; // Skrót do macierzy H globalnej
     double* b = sysEq.t;   // Skrót do wektora wyników (temperatur)
 
+    // 1. TWORZENIE KOPII MACIERZY ABY NIE NISZCZYÆ ORYGINA£U
+    double** A = new double* [n];
+    for (int i = 0; i < n; i++) {
+        A[i] = new double[n];
+        for (int j = 0; j < n; j++) {
+            A[i][j] = sysEq.HG[i][j]; // Kopiujemy wartoœci z globalnej HG
+        }
+    }
     // =============================================================
     // KROK 1: Przygotowanie prawej strony równania
     // Równanie MES: [H]{t} + {P} = 0  ===>  [H]{t} = -{P}
@@ -269,6 +277,8 @@ void solveEquation(SystemEquations& sysEq) {
         // Zabezpieczenie przed dzieleniem przez zero (macierz osobliwa)
         if (std::abs(A[i][i]) < 1e-12) {
             cerr << "Blad krytyczny: Macierz ukladu jest osobliwa (dzielenie przez zero)!" << endl;
+            for (int x = 0; x < n; x++) delete[] A[x];
+            delete[] A;
             return;
         }
 
@@ -299,4 +309,27 @@ void solveEquation(SystemEquations& sysEq) {
         // Wyliczamy t[i]
         b[i] = (b[i] - sum) / A[i][i];
     }
+}
+
+void adjustHg(SystemEquations& sysEq, double dt) {
+    for (int m = 0; m < sysEq.nN; m++) {
+        // dodanie do macierzy Hg czasu
+        for (int n = 0; n < sysEq.nN; n++) {
+            // Sumujemy Hg oraz C/dt
+            sysEq.HG[m][n] += (sysEq.Cg[m][n] / dt);
+        }
+    }
+}
+
+void adjustTime(SystemEquations& sysEq, double dt, double* t0, vector<double>& oldPg) {
+    vector<double> C(sysEq.nN, 0.0);
+    for (int m = 0; m < sysEq.nN; m++) {
+        for (int n = 0; n < sysEq.nN; n++) {
+            C[m] += (sysEq.Cg[m][n] / dt) * t0[n];
+        }
+    }
+
+    for(int i =0; i < sysEq.nN; i++) {
+        sysEq.Pg[i] = oldPg[i] + C[i];
+	}
 }
