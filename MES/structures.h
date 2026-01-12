@@ -16,9 +16,9 @@ struct Jakobian {
 struct element
 {
     int ID[4];
-    Jakobian* Jaco; //wskaünik na tab jakobianow
+    Jakobian* Jaco;
     double H[4][4];
-    //inicjuje Hbc zerami
+    //inicjuje zerami
     double Hbc[4][4] = { 0.0 };
     double P[4] = { 0.0 };
     double C[4][4] = { 0.0 };

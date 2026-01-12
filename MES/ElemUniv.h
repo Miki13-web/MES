@@ -16,13 +16,11 @@ struct elemUniv {
         double** N;
         double* wagi;
 
-		//konstruktor i destruktor
         Surface(int n);
         ~Surface();
 
     };
 
-    // Tablica 4 wskaŸników na powierzchnie (Dó³, Prawa, Góra, Lewa)
     Surface* surfaces[4];
 
     elemUniv(int npc);

@@ -26,16 +26,14 @@ int main() {
     cout << "\nPodaj ile chcesz punktow calkowania: ";
     cin >> gData.npc;
 
-    //wczytanie danych
     readData(filename, gData, gri1);
 
-	// inicjalizacja struktur
     elemUniv elemU(gData.npc);
     SystemEquations sysEq(gData.nN);
 
 	// sprawdzenie dla jakiego kroku czasowego temperatura nie spednie poni¿ej 100 C
-    gData.SimulationStepTime = 55;
-    // uruchamianie obliczen
+    //gData.SimulationStepTime = 55;
+ 
     runCalculations(gri1, gData, elemU, sysEq);
 
 	//============================================================================================================================================
@@ -53,7 +51,6 @@ int main() {
 	cout << endl;*/
 
     // wpisanie wyników macierz HG
-    // Mo¿esz to te¿ przenieœæ do funkcji np. printResults(sysEq) w Logic.cpp
     /*cout << "\nMacierz Globalna HG:" << endl;
     for (int i = 0; i < gData.nN; i++) {
         for (int j = 0; j < gData.nN; j++) {
@@ -79,8 +76,10 @@ int main() {
 
 	cout << "\nRozwiazywanie ukladu rownan..." << endl;
 
-	//gData.SimulationStepTime = 75; //ustawienie kroku czasowego symulacji
-	adjustHg(sysEq, gData.SimulationStepTime); //modyfikacja macierzy HG o czas
+    // sprawdzenie dla jakiego kroku czasowego temperatura nie spednie poni¿ej 100 C
+    //gData.SimulationStepTime = 55;
+	
+	adjustHg(sysEq, gData.SimulationStepTime);
 
     vector<double> oldPg(gData.nN);
     for (int i = 0; i < gData.nN; i++) {
@@ -95,7 +94,7 @@ int main() {
         adjustTime(sysEq, gData.SimulationStepTime, t, oldPg);
 		solveEquation(sysEq);
 
-        // wypisanie wyników temperatury w wêz³ach
+        //wyniki temperatur w wêz³ach
         //cout << "\nTemperatury w wezlach po rozwiazaniu ukladu rownan:" << endl;
 		t_min = sysEq.t[0];
 		t_max = sysEq.t[0];

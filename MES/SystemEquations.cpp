@@ -6,7 +6,6 @@ SystemEquations::SystemEquations(int size) : nN(size) {
 
 	Cg = new double* [nN];
 
-    //zerowanie HG i Pg
     for (int i = 0; i < nN; i++) {
         Pg[i] = 0.0;
         HG[i] = new double[nN]();
@@ -15,7 +14,6 @@ SystemEquations::SystemEquations(int size) : nN(size) {
    
 }
 
-// Destruktor
 SystemEquations::~SystemEquations() {
     for (int i = 0; i < nN; i++) {
         delete[] HG[i];

@@ -2,7 +2,6 @@
 #include <iostream>
 #include <cmath>
 
-// Implementacja konstuktory Surface
 elemUniv::Surface::Surface(int n) : npc_edge(n) {
     wagi = new double[npc_edge];
     N = new double* [npc_edge];
@@ -19,9 +18,8 @@ elemUniv::Surface::~Surface() {
     delete[] wagi;
 }
 
-// Implementacja głównego elemUniv
 elemUniv::elemUniv(int npc) : npc(npc) {
-	int npc2 = npc * npc; // całkowita liczba punktów całkowania w 2D
+	int npc2 = npc * npc; // liczba punktów całkowania w 2D
     dKsi = new double* [npc2];
     dEta = new double* [npc2];
     // funkcje kształtu 
@@ -36,29 +34,28 @@ elemUniv::elemUniv(int npc) : npc(npc) {
     ksi_pc = new double[npc2];
     wagi = new double[npc2];
 
-	int npc_edge = npc; // punkty całkowania na krawędzi
+	int npc_edge = npc; // liczba punktow całkowania na krawędzi
     double* points_1d = new double[npc_edge];
     double* weights_1d = new double[npc_edge];
 
     //ustalanie punktów całkowania i wag w zależności od liczby punktów całkowania
     switch (npc) {
-    case 2: { // Schemat 2x2
-        double p = 1.0 / sqrt(3.0); // wspolrzedna PC 
-        ksi_pc[0] = -p; eta_pc[0] = -p; // PC 1
-        ksi_pc[1] = p; eta_pc[1] = -p; // PC 2 
-        ksi_pc[2] = -p; eta_pc[2] = p; // PC 3 
-        ksi_pc[3] = p; eta_pc[3] = p; // PC 4
+    case 2: {
+        double p = 1.0 / sqrt(3.0); 
+        ksi_pc[0] = -p; eta_pc[0] = -p; 
+        ksi_pc[1] = p; eta_pc[1] = -p;  
+        ksi_pc[2] = -p; eta_pc[2] = p;  
+        ksi_pc[3] = p; eta_pc[3] = p;
 
-        //punkty na krawedziach dla macierzy Hbc
+        //punkty na krawedziach dla Hbc
         points_1d[0] = -p; weights_1d[0] = 1.0;
         points_1d[1] = p; weights_1d[1] = 1.0;
 
-        // dla macierzy funkcji kształtu N
 
         for (int i = 0; i < 4; ++i) wagi[i] = 1.0; // wagi
         break;
     }
-    case 3: { // Schemat 3x3
+    case 3: {
         double p1 = sqrt(3.0 / 5.0);
         double p2 = 0.0;
         double w1 = 5.0 / 9.0;
@@ -74,14 +71,14 @@ elemUniv::elemUniv(int npc) : npc(npc) {
         ksi_pc[7] = p2;  eta_pc[7] = p1;  wagi[7] = w2 * w1;
         ksi_pc[8] = p1;  eta_pc[8] = p1;  wagi[8] = w1 * w1;
 
-        //punkty na krawedziach dla macierzy Hbc
+        //punkty na krawedziach dla Hbc
         points_1d[0] = -p1; weights_1d[0] = w1;
         points_1d[1] = p2; weights_1d[1] = w2;
         points_1d[2] = p1; weights_1d[2] = w1;
 
         break;
     }
-    case 4: { // Schemat 4x4
+    case 4: {
 		double p1 = sqrt((3.0 + 2.0 * sqrt(6.0 / 5.0)) / 7.0);
 		double p2 = sqrt((3.0 - 2.0 * sqrt(6.0 / 5.0)) / 7.0);
 		double w1 = (18.0 - sqrt(30.0)) / 36.0;
@@ -104,7 +101,7 @@ elemUniv::elemUniv(int npc) : npc(npc) {
 		ksi_pc[14] = p2;  eta_pc[14] = p1; wagi[14] = w2 * w1;
 		ksi_pc[15] = p1;  eta_pc[15] = p1; wagi[15] = w1 * w1;
 
-        //punkty na krawedziach dla macierzy Hbc
+        //punkty krawedzi dla Hbc
 		points_1d[0] = -p1; weights_1d[0] = w1;
 		points_1d[1] = -p2; weights_1d[1] = w2;
 		points_1d[2] = p2;  weights_1d[2] = w2;
@@ -114,7 +111,6 @@ elemUniv::elemUniv(int npc) : npc(npc) {
     }
     default:
         std::cerr << "Nieobsługiwana liczba punktów całkowania: " << npc << std::endl;
-        // Domyślnie 4, aby uniknąć awarii
         npc2 = 4;
         double p = 1.0 / sqrt(3.0);
         ksi_pc[0] = -p; eta_pc[0] = -p;
@@ -125,24 +121,21 @@ elemUniv::elemUniv(int npc) : npc(npc) {
         break;
     }
 
-	// Obliczanie wartości pochodnych w każdym punkcie całkowania i funkcji kształtu dla macierzy C
+	// wartości pochodnych w każdym punkcie całkowania i funkcji kształtu dla macierzy C
     for (int i = 0; i < npc2; i++) {
         double eta = eta_pc[i];
         double ksi = ksi_pc[i];
-
-        // Pochodne po KSI 
+ 
         dKsi[i][0] = -0.25 * (1.0 - eta);
         dKsi[i][1] = 0.25 * (1.0 - eta);
         dKsi[i][2] = 0.25 * (1.0 + eta);
         dKsi[i][3] = -0.25 * (1.0 + eta);
 
-        // Pochodne po ETA (η)
         dEta[i][0] = -0.25 * (1.0 - ksi);
         dEta[i][1] = -0.25 * (1.0 + ksi);
         dEta[i][2] = 0.25 * (1.0 + ksi);
         dEta[i][3] = 0.25 * (1.0 - ksi);
 
-		// Funkcje kształtu N do macierzy C
 		fN[i][0] = 0.25 * (1.0 - ksi) * (1.0 - eta);
 		fN[i][1] = 0.25 * (1.0 + ksi) * (1.0 - eta);
 		fN[i][2] = 0.25 * (1.0 + ksi) * (1.0 + eta);
@@ -150,39 +143,36 @@ elemUniv::elemUniv(int npc) : npc(npc) {
 
     }
 
-    //tworzenie 4 powierzchni
+    // 4 powierzchnie
     for (int i = 0; i < 4; i++) {
         surfaces[i] = new Surface(npc_edge);
     }
 
-    // Pętla po 4 krawędziach
+    // pętla po krawędziach
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < npc_edge; j++) {
             double ksi = 0.0, eta = 0.0;
 
-            // Mapowanie punktu 1D na odpowiednią krawędź 2D
-            if (i == 0) { // Dół (Bottom): eta = -1, ksi zmienne
+            if (i == 0) { 
                 ksi = points_1d[j];
                 eta = -1.0;
             }
-            else if (i == 1) { // Prawa (Right): ksi = 1, eta zmienne
+            else if (i == 1) { 
                 ksi = 1.0;
                 eta = points_1d[j];
             }
-            else if (i == 2) { // Góra (Top): eta = 1, ksi zmienne (często odwrócone, ale dla skalara N nie ma znaczenia)
-                ksi = points_1d[npc_edge - 1 - j]; // Opcjonalnie odwrócona kolejność
+            else if (i == 2) { 
+                ksi = points_1d[npc_edge - 1 - j]; 
                 eta = 1.0;
             }
-            else if (i == 3) { // Lewa (Left): ksi = -1, eta zmienne
+            else if (i == 3) {
                 ksi = -1.0;
                 eta = points_1d[npc_edge - 1 - j];
             }
 
-            // Zapisanie wagi dla punktu powierzchni
+            // waga dla punktu powierzchni
             surfaces[i]->wagi[j] = weights_1d[j];
 
-            // Obliczenie funkcji kształtu N w tym punkcie brzegowym
-            // Wzory: N1=0.25(1-k)(1-e), N2=0.25(1+k)(1-e), N3=0.25(1+k)(1+e), N4=0.25(1-k)(1+e)
             surfaces[i]->N[j][0] = 0.25 * (1.0 - ksi) * (1.0 - eta);
             surfaces[i]->N[j][1] = 0.25 * (1.0 + ksi) * (1.0 - eta);
             surfaces[i]->N[j][2] = 0.25 * (1.0 + ksi) * (1.0 + eta);
@@ -194,7 +184,6 @@ elemUniv::elemUniv(int npc) : npc(npc) {
 }
 
 elemUniv::~elemUniv() {
-    // Sprzątanie wnętrza
     for (int i = 0; i < npc*npc; i++) {
         delete[] dKsi[i];
         delete[] dEta[i];
@@ -207,7 +196,6 @@ elemUniv::~elemUniv() {
     delete[] wagi;
 	delete[] fN;
 
-    // Sprzątanie powierzchni
     for (int i = 0; i < 4; i++) {
         delete surfaces[i];
     }
