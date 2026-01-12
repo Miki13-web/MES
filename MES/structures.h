@@ -22,5 +22,9 @@ struct element
     double Hbc[4][4] = { 0.0 };
     double P[4] = { 0.0 };
     double C[4][4] = { 0.0 };
-    //k rho cp
+    //k rho cp w³aœciwoœci beda rozne dla innych materialow
+    double conductivity;
+    double density;
+    double specificHeat;
+
 };

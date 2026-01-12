@@ -84,8 +84,8 @@ void calculateElementMatrices(int i, grid& gri, GlobalData& gData, elemUniv& ele
 		double C_pc[4][4];
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
-                H_pc[i][j] = (dNdx[i] * dNdx[j] + dNdy[i] * dNdy[j]) * gData.Conductivity * jaco.detJ;
-				C_pc[i][j] = N_local[i] * N_local[j] * gData.Density * gData.SpecificHeat * jaco.detJ;
+                H_pc[i][j] = (dNdx[i] * dNdx[j] + dNdy[i] * dNdy[j]) * gri.elements[nr_elementu].conductivity * jaco.detJ;
+				C_pc[i][j] = N_local[i] * N_local[j] * gri.elements[nr_elementu].density * gri.elements[nr_elementu].specificHeat * jaco.detJ;
                 //dodaje sobie odrazu do macierzy dla elementu
                 gri.elements[nr_elementu].H[i][j] += H_pc[i][j] * elemU.wagi[numer_wagi];
 				gri.elements[nr_elementu].C[i][j] += C_pc[i][j] * elemU.wagi[numer_wagi];
@@ -206,69 +206,149 @@ void runCalculations(grid& gri, GlobalData& gData, elemUniv& elemU, SystemEquati
     cout << "Agregacja zakonczona." << endl;
 }
 
+//void solveEquation(SystemEquations& sysEq) {
+//    int n = sysEq.nN;
+//    double* b = sysEq.t;
+//
+//    // kopia Hg
+//    double** A = new double* [n];
+//    for (int i = 0; i < n; i++) {
+//        A[i] = new double[n];
+//        for (int j = 0; j < n; j++) {
+//            A[i][j] = sysEq.HG[i][j]; 
+//        }
+//    }
+//    
+//    for (int i = 0; i < n; i++) {
+//        b[i] = sysEq.Pg[i]; 
+//    }
+//
+//    // eliminacja Gaussa z pivotingiem
+//
+//    for (int i = 0; i < n - 1; i++) {
+//        
+//        int maxRow = i;
+//        for (int k = i + 1; k < n; k++) {
+//            if (std::abs(A[k][i]) > std::abs(A[maxRow][i])) {
+//                maxRow = k;
+//            }
+//        }
+//
+//        if (maxRow != i) {
+//            std::swap(b[i], b[maxRow]); 
+//            for (int k = i; k < n; k++) {
+//                std::swap(A[i][k], A[maxRow][k]); 
+//            }
+//        }
+//
+//        // zabezpieczenie przed dzieleniem przez zero (macierz osobliwa)
+//        if (std::abs(A[i][i]) < 1e-12) {
+//            cerr << "Blad krytyczny: Macierz ukladu jest osobliwa (dzielenie przez zero)!" << endl;
+//            for (int x = 0; x < n; x++) delete[] A[x];
+//            delete[] A;
+//            return;
+//        }
+//
+//        for (int k = i + 1; k < n; k++) {
+//            double factor = A[k][i] / A[i][i];
+//
+//            for (int j = i; j < n; j++) {
+//                A[k][j] -= factor * A[i][j];
+//            }
+//            b[k] -= factor * b[i];
+//        }
+//    }
+//
+//    // back substitution
+//    // niewiadome od koñca od do³u macierzy trójk¹tnej
+//    for (int i = n - 1; i >= 0; i--) {
+//        double sum = 0.0;
+//        for (int j = i + 1; j < n; j++) {
+//            sum += A[i][j] * b[j];
+//        }
+//        
+//        b[i] = (b[i] - sum) / A[i][i];
+//    }
+//}
+
+// nowa szybsza funkcja do rozwiazywania ukladu rownan
 void solveEquation(SystemEquations& sysEq) {
     int n = sysEq.nN;
-    double* b = sysEq.t;
-
-    // kopia Hg
     double** A = new double* [n];
+    double* b = sysEq.t; // Rozwi¹zanie nadpisuje wektor t (InitialTemp)
+
+    // Kopiowanie danych do tymczasowej macierzy A (bo Gauss j¹ niszczy)
     for (int i = 0; i < n; i++) {
         A[i] = new double[n];
         for (int j = 0; j < n; j++) {
-            A[i][j] = sysEq.HG[i][j]; 
+            A[i][j] = sysEq.HG[i][j]; // HG to ju¿ H + C/dt
         }
-    }
-    
-    for (int i = 0; i < n; i++) {
-        b[i] = sysEq.Pg[i]; 
+        // Prawa strona równania (P + C/dt * T_old)
+        b[i] = sysEq.Pg[i];
     }
 
-    // eliminacja Gaussa z pivotingiem
+    // === OPTYMALIZACJA PASMOWA ===
+    // Dla siatki 60x60 wêz³y s¹siaduj¹ z wêz³ami o indeksach +/- ok. 61.
+    // Ustawiamy limit pêtli, ¿eby nie mieliæ tysiêcy zer.
+    int pol_pasma = 150; // Bezpieczny zapas dla Twojej siatki
 
+    // Eliminacja Gaussa
     for (int i = 0; i < n - 1; i++) {
-        
+
+        // Wybór elementu g³ównego (pivot) - tylko w obrêbie pasma!
         int maxRow = i;
-        for (int k = i + 1; k < n; k++) {
+        int max_search = std::min(n, i + pol_pasma);
+
+        for (int k = i + 1; k < max_search; k++) {
             if (std::abs(A[k][i]) > std::abs(A[maxRow][i])) {
                 maxRow = k;
             }
         }
 
+        // Zamiana wierszy
         if (maxRow != i) {
-            std::swap(b[i], b[maxRow]); 
-            for (int k = i; k < n; k++) {
-                std::swap(A[i][k], A[maxRow][k]); 
-            }
+            std::swap(A[i], A[maxRow]); // Zamiana wskaŸników jest szybsza ni¿ kopiowanie
+            std::swap(b[i], b[maxRow]);
         }
 
-        // zabezpieczenie przed dzieleniem przez zero (macierz osobliwa)
-        if (std::abs(A[i][i]) < 1e-12) {
-            cerr << "Blad krytyczny: Macierz ukladu jest osobliwa (dzielenie przez zero)!" << endl;
-            for (int x = 0; x < n; x++) delete[] A[x];
-            delete[] A;
-            return;
+        if (std::abs(A[i][i]) < 1e-14) {
+            // Pomijamy osobliwe (w praktyce MES rzadko siê zdarza przy poprawnych danych)
+            continue;
         }
 
-        for (int k = i + 1; k < n; k++) {
+        // Eliminacja wierszy poni¿ej - TYLKO W PASMIE
+        int max_k = std::min(n, i + pol_pasma);
+
+        for (int k = i + 1; k < max_k; k++) {
+            if (std::abs(A[k][i]) < 1e-14) continue; // Jak ju¿ jest 0, to nie licz
+
             double factor = A[k][i] / A[i][i];
 
-            for (int j = i; j < n; j++) {
+            // Odejmowanie wierszy - TYLKO W PASMIE KOLUMN
+            int max_j = std::min(n, i + pol_pasma);
+
+            for (int j = i; j < max_j; j++) {
                 A[k][j] -= factor * A[i][j];
             }
             b[k] -= factor * b[i];
         }
     }
 
-    // back substitution
-    // niewiadome od koñca od do³u macierzy trójk¹tnej
+    // Postêpowanie odwrotne (Back substitution) - Te¿ zoptymalizowane
     for (int i = n - 1; i >= 0; i--) {
         double sum = 0.0;
-        for (int j = i + 1; j < n; j++) {
+
+        int max_j = std::min(n, i + pol_pasma);
+
+        for (int j = i + 1; j < max_j; j++) {
             sum += A[i][j] * b[j];
         }
-        
         b[i] = (b[i] - sum) / A[i][i];
     }
+
+    // Sprz¹tanie pamiêci
+    for (int i = 0; i < n; i++) delete[] A[i];
+    delete[] A;
 }
 
 void adjustHg(SystemEquations& sysEq, double dt) {

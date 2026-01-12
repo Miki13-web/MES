@@ -124,6 +124,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ElemUniv.cpp" />
+    <ClCompile Include="GmshExporter.cpp" />
     <ClCompile Include="LoadData.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MES_logic.cpp" />
@@ -132,6 +133,7 @@
   <ItemGroup>
     <ClInclude Include="ElemUniv.h" />
     <ClInclude Include="GlobalData.h" />
+    <ClInclude Include="GmshExporter.h" />
     <ClInclude Include="Grid.h" />
     <ClInclude Include="LoadData.h" />
     <ClInclude Include="MES_logic.h" />

@@ -1,5 +1,8 @@
 #pragma once
 #include "Structures.h"
+#include <vector>
+
+using namespace std;
 
 struct grid
 {
@@ -9,6 +12,8 @@ struct grid
     element* elements;
     int* BC;
     int BC_count;
+    vector<int> inductionNodes;
+    int probeNodeID;
 
     grid() {
         nN = 0;
@@ -17,6 +22,7 @@ struct grid
         elements = nullptr;
         BC = nullptr;
         BC_count = 0;
+        probeNodeID = -1;
     }
 
     ~grid() { 
