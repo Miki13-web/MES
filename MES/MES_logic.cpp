@@ -24,7 +24,7 @@ void calculateElementMatrices(int i, grid& gri, GlobalData& gData, elemUniv& ele
     // Pêtla po punktach ca³kowania (Jacobian, H)
     //  Pêtla po wszystkich punktach ca³kowania (PC) dla danego elementu
     for (int j = 0; j < (gData.npc*gData.npc); j++) {
-        cout << "\n  Punkt Calkowania (PC) " << j + 1 << " (ksi=" << elemU.ksi_pc[j] << ", eta=" << elemU.eta_pc[j] << "):" << endl;
+        //cout << "\n  Punkt Calkowania (PC) " << j + 1 << " (ksi=" << elemU.ksi_pc[j] << ", eta=" << elemU.eta_pc[j] << "):" << endl;
 
         int numer_wagi = j;
 
@@ -102,14 +102,14 @@ void calculateElementMatrices(int i, grid& gri, GlobalData& gData, elemUniv& ele
         
         // wypisanie macierzy H dla punktu
         //mozna zakomentowac
-        cout << "\n    Macierz H dla tego punktu calkowania:" << endl;
+       /* cout << "\n    Macierz H dla tego punktu calkowania:" << endl;
         for (int m = 0; m < 4; m++) {
             cout << "      [ ";
             for (int n = 0; n < 4; n++) {
                 cout << setw(12) << fixed << setprecision(6) << H_pc[m][n] << (n == 3 ? " ]" : ",");
             }
             cout << endl << endl;
-        }
+        }*/
 		//wypisanie macierzy C dla punktu
         /*cout << "\n    Macierz C dla tego punktu calkowania:" << endl;
         for (int m = 0; m < 4; m++) {
@@ -212,11 +212,11 @@ void runCalculations(grid& gri, GlobalData& gData, elemUniv& elemU, SystemEquati
     //dla kazdego elementu
     for (int i = 0; i < gri.nE; i++) {
 		//Wypisanie informacji o elemencie
-        cout << "==================================" << endl;
+       /* cout << "==================================" << endl;
         cout << "--- Element " << i + 1 << " [ID: "
             << gri.elements[i].ID[0] << "," << gri.elements[i].ID[1] << ","
             << gri.elements[i].ID[2] << "," << gri.elements[i].ID[3] << "]" << " ---" << endl;
-        cout << "==================================" << endl;
+        cout << "==================================" << endl;*/
         
         //oblicz lokalne macierze
         calculateElementMatrices(i, gri, gData, elemU);

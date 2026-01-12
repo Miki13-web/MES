@@ -22,4 +22,5 @@ struct element
     double Hbc[4][4] = { 0.0 };
     double P[4] = { 0.0 };
     double C[4][4] = { 0.0 };
+    //k rho cp
 };
