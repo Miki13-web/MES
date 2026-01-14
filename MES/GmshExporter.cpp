@@ -11,13 +11,12 @@ GmshExporter::GmshExporter(string fname) {
     }
     filename = fname;
 
-    // Czyœcimy plik przy starcie
     ofstream file(filename, ios::trunc);
     file.close();
 }
 
 void GmshExporter::exportMesh(const grid& gri) {
-    ofstream file(filename, ios::app); // Otwieramy w trybie dopisywania
+    ofstream file(filename, ios::app); 
 
     if (!file.is_open()) {
         cerr << "BLAD: Nie mozna otworzyc pliku do zapisu GMSH!" << endl;
@@ -32,7 +31,7 @@ void GmshExporter::exportMesh(const grid& gri) {
     file << gri.nN << "\n"; // Liczba wêz³ów
     for (int i = 0; i < gri.nN; i++) {
         // Format: ID x y z
-        // ID w Gmsh musi byæ od 1. Twoje tablice s¹ od 0, wiêc ID to i+1.
+        // ID w Gmsh musi byæ od 1.  wiêc ID to i+1.
         file << (i + 1) << " " << gri.nodes[i].x << " " << gri.nodes[i].y << " 0.0\n";
     }
     file << "$EndNodes\n";
@@ -43,13 +42,8 @@ void GmshExporter::exportMesh(const grid& gri) {
     for (int i = 0; i < gri.nE; i++) {
         // Format: ID Typ(3=Quad4) LiczbaTagow(2) TagFizyczny TagGeom n1 n2 n3 n4
 
-        // Tag fizyczny = 1 (wszystkie elementy w jednej grupie, bo nie mamy MatID w strukturze)
-        // Jeœli chcesz widzieæ ró¿nicê, musia³byœ przywróciæ MatID, ale na razie dajemy 1.
+        file << (i + 1) << " 3 2 " << (gri.elements[i].matID + 1) << " 0 ";
 
-        file << (i + 1) << " 3 2 1 0 ";
-
-        // Twoje ID wêz³ów w elementach s¹ wczytane jako 1-based (np. 1..961),
-        // wiêc wpisujemy je bezpoœrednio.
         file << gri.elements[i].ID[0] << " "
             << gri.elements[i].ID[1] << " "
             << gri.elements[i].ID[2] << " "

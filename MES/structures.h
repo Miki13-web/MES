@@ -27,4 +27,6 @@ struct element
     double density;
     double specificHeat;
 
+    int matID;
+
 };

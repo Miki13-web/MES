@@ -23,9 +23,11 @@ void readData(string filename, GlobalData& gData, grid& gri) {
         {0.026, 1.2,    1005.0}, // ID 0: Powietrze
         {26.0,  7740.0, 460.0},  // ID 1: Stal (Yato)
         {220.0, 2700.0, 900.0},  // ID 2: Aluminium
-        {0.56,  1060.0, 3750.0}  // ID 3: Sandacz
+        { 0.56, 1060.0, 3340.0 },  // ID 3: Sandacz
+        {1.05,  2500.0, 840.0}  // ID 4: SZKLANA PRZYKRYWKA PATELNI
     };
 
+   //woda do testow {0.6,   1000.0, 4186.0},
     string text, line;
 
     // Wczytywanie zmiennych globalnych
@@ -86,6 +88,7 @@ void readData(string filename, GlobalData& gData, grid& gri) {
 
         if (matID < 0 || matID >= materials.size()) matID = 0;
 
+        gri.elements[i].matID = matID;
         gri.elements[i].conductivity = materials[matID].conductivity;
         gri.elements[i].density = materials[matID].density;
         gri.elements[i].specificHeat = materials[matID].specificHeat;
@@ -130,7 +133,6 @@ void readData(string filename, GlobalData& gData, grid& gri) {
         else if (text == "*Probe_Node" || text == "*Probe_Node\n") {
             int id;
             file >> id;
-            // Pamiêtaj: w pliku ID s¹ od 1, a w C++ tablice s¹ od 0!
             gri.probeNodeID = id - 1;
         }
     }

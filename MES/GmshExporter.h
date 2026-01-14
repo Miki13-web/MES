@@ -11,9 +11,9 @@ private:
 public:
     GmshExporter(std::string fname);
 
-    // Zapisuje geometriê (Wêz³y i Elementy) - raz
+    // zapisuje siatkê - raz
     void exportMesh(const grid& gri);
 
-    // Zapisuje wynik temperatury dla danej chwili czasu - w pêtli
+    // zapisuje wynik temperatury dla danej chwili czasu - w pêtli
     void exportSolution(const grid& gri, const SystemEquations& sysEq, double time, int stepNumber);
 };

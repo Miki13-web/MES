@@ -59,7 +59,9 @@ int main() {
 
     //wybor siatki
     //siatka sandacz
-    filename = "siatka_6x6_v2.txt";
+    filename = "siatka_60x60.txt";
+    //filename = "siatka_6x6_pokrywka.txt";
+    //filename = "siatka_60x60_woda.txt";
 
     //filename = "Test1_4_4.txt";
     //filename="Test3_31_31_kwadrat.txt";
@@ -74,22 +76,36 @@ int main() {
     SystemEquations sysEq(gData.nN);
 
     //zaby bylo jak w rzeczywistosci to klade na rozgrzna patelnie wiec daje na poczatke inna temperatuire patelni
-    double tempPatelni = 60.0;
-    double tempSandacz = 15.0;
+    double tempPatelni = 180.0;
+    double tempSandacz = 19.0;
     double tempOtoczenia = 21.5;
 
     int probeNodeID = gri1.probeNodeID;
- 
+    int sensorPanID = (!gri1.inductionNodes.empty()) ? gri1.inductionNodes.back() : 0;
+
+    double t_min, t_max, t_srodek_sandacza;
+
+    // Parametry termostatu w indukcji 
+    double tempGorna = 205.0;
+    double tempDolna = 180.0;
+    double heatFlux = 25450.0; //wyznaczylem robiac eksperyment z woda i dopasowalem tutaj w programie
+    double dx = 0.001;
+
+    bool grzanieWlaczone = true;
+    bool czyJuzPrzewrocono = false;
+
+    int step = 1;
+
+    //przypisanie pocatkowych temperatur
     for (int i = 0; i < gData.nN; i++) {
         double y = gri1.nodes[i].y;
         double x = gri1.nodes[i].x;
 
-        // geometria 6x6 cm, dno < 6mm
         if (y <= 0.006) {
             sysEq.t[i] = tempPatelni;
         }
         else {
-            if (x >= 0.01 && y <= 0.036) {
+            if (x >= 0.0101 && y <= 0.036) {
                 sysEq.t[i] = tempSandacz;
             }
             else {
@@ -97,45 +113,70 @@ int main() {
             }
         }
     }
+
+
+    //obliczanie macierzy H, C i wektora P
     runCalculations(gri1, gData, elemU, sysEq);
 
-	//z eksperymentu z patelnia i woda liczê strumieñ ciepla i dodaje do globalnego wektora obci¹¿en Pg
-    
-    double HeatFlux = 26500;
-    double dx = 0.001;
+    //eksporter do pliku dla stworzenia symulacji
+    GmshExporter exporter("wynik_sandacz.msh");
+    exporter.exportMesh(gri1);
+    exporter.exportSolution(gri1, sysEq, 0.0, 0);
 
-    for (int nodeID : gri1.inductionNodes) {
-        sysEq.Pg[nodeID] += HeatFlux * dx;
-    }
+
 
 	//============================================================================================================================================
 	// Rozwi¹zanie uk³adu równañ w pêtli po kroku czasowym
 	//============================================================================================================================================
 
-    //eksporter do pliku dla stworzenia symulacji
-    GmshExporter exporter("wynik_sandacz.msh");
-    exporter.exportMesh(gri1);                 
-    exporter.exportSolution(gri1, sysEq, 0.0, 0); 
-
-
 	cout << "\nRozwiazywanie ukladu rownan..." << endl;
 	
 	adjustHg(sysEq, gData.SimulationStepTime);
 
-    vector<double> oldPg(gData.nN);
+    //bazowy wektor P
+    vector<double> basePg(gData.nN);
     for (int i = 0; i < gData.nN; i++) {
-        oldPg[i] = sysEq.Pg[i];
+        basePg[i] = sysEq.Pg[i];
     }
-
-    double t_min, t_max, t_srodek_sandacza;
-    bool czyJuzPrzewrocono = false;
-    int step = 1;
 
     for (double i = 0; i < gData.SimulationTime; i += gData.SimulationStepTime) {
         cout << "Czas symulacji: " << i + gData.SimulationStepTime << " s" << "\t";
+
+        double t_dna = sysEq.t[sensorPanID];
+
+        if (grzanieWlaczone) {
+            if (t_dna >= tempGorna) {
+                grzanieWlaczone = false; 
+            }
+        }
+        else {
+            if (t_dna <= tempDolna) {
+                grzanieWlaczone = true; 
+            }
+        }
+
+        for (int i = 0; i < gData.nN; i++) sysEq.Pg[i] = basePg[i];
+
+        if (grzanieWlaczone) {
+            for (int nodeID : gri1.inductionNodes) {
+                sysEq.Pg[nodeID] += heatFlux * dx;
+            }
+        }
+
+        double t_ryba = sysEq.t[probeNodeID];
+        if (!czyJuzPrzewrocono && t_ryba >= 30.0) {
+            przewrocRybe(gri1, sysEq);
+            czyJuzPrzewrocono = true;
+        }
+
 		double* t = sysEq.t; //poprzednie temperatury do kolejnego kroku czasowego
-        adjustTime(sysEq, gData.SimulationStepTime, t, oldPg);
-		solveEquation(sysEq);
+
+        vector<double> currentPg(gData.nN);
+        for (int k = 0; k < gData.nN; k++) currentPg[k] = sysEq.Pg[k];
+
+        adjustTime(sysEq, gData.SimulationStepTime, t, currentPg);
+		
+        solveEquation(sysEq);
 
         //zapis do pliku
         exporter.exportSolution(gri1, sysEq, i + gData.SimulationStepTime, step);
@@ -150,18 +191,10 @@ int main() {
 			if (sysEq.t[i] < t_min) t_min = sysEq.t[i];
            // cout << setprecision(6) << "t[" << i << "] = " << sysEq.t[i] << endl;
         }
-
-        //pobranie temp ze œrodka
+        
         t_srodek_sandacza = sysEq.t[probeNodeID];
 
-        if (!czyJuzPrzewrocono && t_srodek_sandacza >= 36.0) {
-
-            przewrocRybe(gri1, sysEq); 
-
-            czyJuzPrzewrocono = true; 
-        }
-        
-        //wypisanie tylko min i max
+        //wypisanie tylko min i max i srodek
         cout << setprecision(6) << "T srodek: " << t_srodek_sandacza << " C" << "\t";
 		cout << setprecision(6) << "T min: " << t_min << " C" << "\t";
         cout << setprecision(6) << "T max: " << t_max << " C" << endl;

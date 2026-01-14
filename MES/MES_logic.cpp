@@ -10,9 +10,8 @@ void calculateElementMatrices(int i, grid& gri, GlobalData& gData, elemUniv& ele
     
     int nr_elementu = i;
 
-    //Zerowanie H, Hbc, C i P
+    //Zerowanie
     for (int m = 0; m < 4; m++) {
-        //zerowanie wektora P
         gri.elements[i].P[m] = 0.0;
         for (int n = 0; n < 4; n++) {
             gri.elements[i].H[m][n] = 0.0;
@@ -206,6 +205,8 @@ void runCalculations(grid& gri, GlobalData& gData, elemUniv& elemU, SystemEquati
     cout << "Agregacja zakonczona." << endl;
 }
 
+//poprzednia funkcja do rozwiazywania uk³adu rownan
+
 //void solveEquation(SystemEquations& sysEq) {
 //    int n = sysEq.nN;
 //    double* b = sysEq.t;
@@ -275,15 +276,14 @@ void runCalculations(grid& gri, GlobalData& gData, elemUniv& elemU, SystemEquati
 void solveEquation(SystemEquations& sysEq) {
     int n = sysEq.nN;
     double** A = new double* [n];
-    double* b = sysEq.t; // Rozwi¹zanie nadpisuje wektor t (InitialTemp)
+    double* b = sysEq.t; 
 
-    // Kopiowanie danych do tymczasowej macierzy A (bo Gauss j¹ niszczy)
+    // tymczasowea macierz A (kopia Hg bo Gauss j¹ niszczy)
     for (int i = 0; i < n; i++) {
         A[i] = new double[n];
         for (int j = 0; j < n; j++) {
-            A[i][j] = sysEq.HG[i][j]; // HG to ju¿ H + C/dt
+            A[i][j] = sysEq.HG[i][j];
         }
-        // Prawa strona równania (P + C/dt * T_old)
         b[i] = sysEq.Pg[i];
     }
 
@@ -295,7 +295,7 @@ void solveEquation(SystemEquations& sysEq) {
     // Eliminacja Gaussa
     for (int i = 0; i < n - 1; i++) {
 
-        // Wybór elementu g³ównego (pivot) - tylko w obrêbie pasma!
+        //pivoting - w obrêbie pasma!
         int maxRow = i;
         int max_search = std::min(n, i + pol_pasma);
 
@@ -307,24 +307,21 @@ void solveEquation(SystemEquations& sysEq) {
 
         // Zamiana wierszy
         if (maxRow != i) {
-            std::swap(A[i], A[maxRow]); // Zamiana wskaŸników jest szybsza ni¿ kopiowanie
+            std::swap(A[i], A[maxRow]); // amiana wskaŸników szybsza ni¿ kopiowanie
             std::swap(b[i], b[maxRow]);
         }
 
         if (std::abs(A[i][i]) < 1e-14) {
-            // Pomijamy osobliwe (w praktyce MES rzadko siê zdarza przy poprawnych danych)
             continue;
         }
 
-        // Eliminacja wierszy poni¿ej - TYLKO W PASMIE
         int max_k = std::min(n, i + pol_pasma);
 
         for (int k = i + 1; k < max_k; k++) {
-            if (std::abs(A[k][i]) < 1e-14) continue; // Jak ju¿ jest 0, to nie licz
+            if (std::abs(A[k][i]) < 1e-14) continue; 
 
             double factor = A[k][i] / A[i][i];
 
-            // Odejmowanie wierszy - TYLKO W PASMIE KOLUMN
             int max_j = std::min(n, i + pol_pasma);
 
             for (int j = i; j < max_j; j++) {
@@ -334,7 +331,7 @@ void solveEquation(SystemEquations& sysEq) {
         }
     }
 
-    // Postêpowanie odwrotne (Back substitution) - Te¿ zoptymalizowane
+    //Back substitution
     for (int i = n - 1; i >= 0; i--) {
         double sum = 0.0;
 
@@ -346,7 +343,6 @@ void solveEquation(SystemEquations& sysEq) {
         b[i] = (b[i] - sum) / A[i][i];
     }
 
-    // Sprz¹tanie pamiêci
     for (int i = 0; i < n; i++) delete[] A[i];
     delete[] A;
 }
