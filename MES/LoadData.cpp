@@ -21,8 +21,8 @@ void readData(string filename, GlobalData& gData, grid& gri) {
     //wlasnosci materialow
     vector<MaterialDef> materials = {
         {0.026, 1.2,    1005.0}, // ID 0: Powietrze
-        {26.0,  7740.0, 460.0},  // ID 1: Stal (Yato)
-        {220.0, 2700.0, 900.0},  // ID 2: Aluminium
+        {22.5,  7740.0, 440.0},  // ID 1: Stal (Yato 21/0)
+        {220.0, 2700.0, 910.0},  // ID 2: Aluminium
         { 0.56, 1060.0, 3340.0 },  // ID 3: Sandacz
         {1.05,  2500.0, 840.0}  // ID 4: SZKLANA PRZYKRYWKA PATELNI
     };
